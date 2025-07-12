@@ -1,16 +1,17 @@
 {
   "name": "user-management-backend",
   "version": "1.0.0",
-  "description":"Backend API for the User Management application",
+  "description": "Backend API for the User Management application",
   "main": "src/server",
   "scripts": {
-  "start": "node src/server.js",
-  "dev": "nodemon src/server.js",
-  "test": "jest"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
   },
   "dependencies": {
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
+    "moongoose": "^0.0.5",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
