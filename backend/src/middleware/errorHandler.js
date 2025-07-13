@@ -1,16 +1,28 @@
 const errorHandler = (err, req, res, next) => {
+  let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  let message = err.message;
+
   console.error(err.stack);
 
-  if (err.name === 'ValidationError') {
-    const errors = Object.values(err.errors).map(el => el.message);
-    const message = `Datos de entrada inválidos. ${errors.join('. ')}`;
-    return res.status(400).json({ success: false, message });
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
+    statusCode = 404;
+    message = 'Recurso no encontrado';
   }
 
-  res.status(500).json({
+  if (err.name === 'ValidationError') {
+    statusCode = 400;
+    const errors = Object.values(err.errors).map(el => el.message);
+        message = `Datos de entrada inválidos: ${errors.join('. ')}`;
+  }
+
+  if (err.code === 11000) {
+    statusCode = 400;
+    const field = Object.keys(err.keyValue);
+    message = `El campo ${field} ya existe.`;
+  }
+  res.status(statusCode).json({
     success: false,
-    message: 'Ha ocurrido un error en el servidor.',
+
+    message: message,
   });
 };
-
-module.exports = errorHandler;
