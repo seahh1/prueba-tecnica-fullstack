@@ -1,13 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const asyncHandler = require('../utils/asyncHandler');
 const { protect } = require('../middleware/auth');
 
-router.post('/', asyncHandler(userController.createNewUser));
+router.post('/', userController.createNewUser);
 
-router.get('/me', protect, asyncHandler((req, res) => {
-    res.status(200).json({ success: true, data: req.user });
-}));
+router.use(protect);
+
+router.get('/', userController.getUsers);
+
+router
+  .route('/:id')
+  .get(userController.getUser) 
+  .put(userController.updateUser) 
+  .delete(userController.deleteUser);
 
 module.exports = router;
