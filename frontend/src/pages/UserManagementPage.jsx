@@ -27,7 +27,6 @@ const columns = [
 function UserManagementPage() {
   return (
     <Box>
-
       <Alert severity="success" sx={{ mb: 2 }}>
         ¡Excelente! Usuario añadido correctamente.
       </Alert>

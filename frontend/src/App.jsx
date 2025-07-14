@@ -9,9 +9,7 @@ function App() {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<UserManagementPage />} />
           <Route path="users" element={<Navigate to="/" replace />} />
-          
         </Route>
-
       </Routes>
     </Router>
   );
