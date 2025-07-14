@@ -1,67 +1,146 @@
+import React, { useState } from 'react';
 import { Box, Typography, Button, Stack, TextField, Select, MenuItem, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid } from '@mui/x-data-grid';
-
-const rows = [
-  { id: 1, email: 'deanna.curtis@example.com', nombre: 'Jenny Wilson', banco: 'Santander', estatus: 'Activo', permisos: 'Operacional' },
-  { id: 2, email: 'tanya.hill@example.com', nombre: 'Marvin McKinney', banco: 'BBVA', estatus: 'Activo', permisos: 'Completo' },
-  { id: 3, email: 'jessica.hanson@example.com', nombre: 'Jerome Bell', banco: 'CBT', estatus: 'Activo', permisos: 'Basico' },
-  { id: 4, email: 'kenzi.lawson@example.com', nombre: 'Cody Fisher', banco: 'Creditas', estatus: 'Inactivo', permisos: 'Operacional' },
-];
-
-const columns = [
-  { field: 'email', headerName: 'Email', flex: 1.5 },
-  { field: 'nombre', headerName: 'Nombre', flex: 1 },
-  { field: 'banco', headerName: 'Banco', flex: 1 },
-  { field: 'estatus', headerName: 'Estatus', flex: 0.7 },
-  { field: 'permisos', headerName: 'Permisos de Empleado', flex: 1 },
-  {
-    field: 'acciones',
-    headerName: 'Acciones',
-    flex: 0.5,
-    renderCell: () => <Button variant="outlined" size="small">Editar</Button>,
-  },
-];
-
+import { useUsers } from '../store/UserContext';
+import UserFormModal from '../components/users/UserFormModal';
+import { toast } from 'react-toastify';
 
 function UserManagementPage() {
+  const { users, isLoading, error, pagination, setPagination, searchTerm, setSearchTerm, permissionFilter, setPermissionFilter, deleteUser } = useUsers();
+
+  const [openModal, setOpenModal] = useState(false);
+  const [userToEdit, setUserToEdit] = useState(null);
+
+  const handleOpenCreateModal = () => {
+    setUserToEdit(null); 
+    setOpenModal(true);
+  };
+
+  const handleOpenEditModal = (user) => {
+    setUserToEdit(user);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setUserToEdit(null);
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+      try {
+        await deleteUser(id);
+      } catch (err) {
+      }
+    }
+  };
+  
+  const columns = [
+    { field: 'email', headerName: 'Email', flex: 1.5 },
+    { field: 'nombre', headerName: 'Nombre', flex: 1 },
+    { field: 'banco', headerName: 'Banco', flex: 1 },
+    { 
+      field: 'estatus', 
+      headerName: 'Estatus', 
+      flex: 0.7,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={params.value === 'Active' ? 'success' : 'error'}
+          size="small"
+          sx={{ textTransform: 'capitalize' }}
+        />
+      )
+    },
+    { field: 'permisos', headerName: 'Permisos de Empleado', flex: 1 },
+    {
+    field: 'acciones',
+    headerName: 'Acciones',
+    flex: 0.8,
+    soportable: false,
+    filterable: false,
+    renderCell: (paramas) => (
+      <Box>
+          <IconButton color="primary" onClick={() => handleOpenEditModal(params.row)}>
+            <EditIcon />
+          </IconButton>
+          <IconButton color="error" onClick={() => handleDeleteUser(params.row._id)}>
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+        )
+      },
+    ];
   return (
     <Box>
-      <Alert severity="success" sx={{ mb: 2 }}>
-        ¡Excelente! Usuario añadido correctamente.
-      </Alert>
-
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
           Lista de usuarios
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreateModal}>
           Añadir nuevo usuario
         </Button>
+
       </Stack>
 
       <Stack direction="row" spacing={2} mb={3}>
-        <TextField label="Buscar nombre de usuario, correo electrónico..." variant="outlined" fullWidth />
-        <Select defaultValue="all" sx={{ minWidth: 200 }}>
+        <TextField 
+          label="Buscar nombre de usuario, correo electrónico..." 
+          variant="outlined" 
+          fullWidth 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Select 
+          value={permissionFilter || 'all'} 
+          onChange={(e) => setPermissionFilter(e.target.value === 'all' ? '' : e.target.value)}
+          sx={{ minWidth: 200 }}
+        >
           <MenuItem value="all">Todos los permisos</MenuItem>
-          <MenuItem value="operational">Operativo</MenuItem>
-          <MenuItem value="full">Completo</MenuItem>
+          <MenuItem value="Operational">Operativo</MenuItem>
+          <MenuItem value="Completo">Full</MenuItem>
+          <MenuItem value="Basic">Basico</MenuItem>
         </Select>
-        <Button variant="contained" color="secondary">Buscar</Button>
       </Stack>
 
-      <Box sx={{ height: 500, width: '100%', backgroundColor: 'background.paper', p: 2, borderRadius: 2 }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          checkboxSelection={false}
-          disableSelectionOnClick
-        />
-      </Box>
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {!isLoading && error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Error al cargar usuarios: {error.message || 'Error desconocido'}
+        </Alert>
+      )}
+
+      {!isLoading && !error && (
+        <Box sx={{ height: 500, width: '100%', backgroundColor: 'background.paper', p: 2, borderRadius: 2 }}>
+          <DataGrid
+            rows={users}
+            columns={columns}
+            pageSize={pagination.limit}
+            rowCount={pagination.totalPages * pagination.limit}
+            paginationMode="server" 
+            onPageChange={(newPage) => setPagination(prev => ({ ...prev, page: newPage + 1 }))}
+            onPageSizeChange={(newPageSize) => setPagination(prev => ({ ...prev, limit: newPageSize }))}
+            page={pagination.page - 1} 
+            rowsPerPageOptions={[5, 10, 20]}
+            checkboxSelection={false}
+            disableSelectionOnClick
+          />
+        </Box>
+      )}
+
+      <UserFormModal
+        open={openModal}
+        handleClose={handleCloseModal}
+        userToEdit={userToEdit}
+      />
     </Box>
   );
 }
-
-export default UserManagementPage;

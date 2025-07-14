@@ -4,10 +4,13 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../store/AuthContext';
 
 const drawerWidth = 240;
 
 function AppLayout() {
+  const { logout, user } = useAuth();
   return (
     <Box sx={{ display: 'flex' }}>
       <Drawer
@@ -24,24 +27,34 @@ function AppLayout() {
         }}
       >
         <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
-          <Box component="h1" sx={{ m: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
+          <Typography variant="h5" component="h1" sx={{ m: 0, fontWeight: 'bold' }}>
             SGDU
-          </Box>
+          </Typography>
         </Toolbar>
-        <List>
-          {['Panel de control', 'Usuarios', 'Informes', 'Configuración'].map((text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton sx={{ '&:hover': { backgroundColor: 'primary.main' } }}>
-                <ListItemIcon sx={{ color: 'white' }}>
-                  {index === 0 && <DashboardIcon />}
-                  {index === 1 && <PeopleIcon />}
-                  {index === 2 && <BarChartIcon />}
-                  {index === 3 && <SettingsIcon />}
-                </ListItemIcon>
-                {text}
+        <List sx={{ flexGrow: 1 }}>
+          {[{ text: 'Panel de control', icon: <DashboardIcon />, path: '/' },
+            { text: 'Usuarios', icon: <PeopleIcon />, path: '/' },
+            { text: 'Informes', icon: <BarChartIcon />, path: '/reports' },
+             { text: 'Configuración', icon: <SettingsIcon />, path: '/settings' }
+          ].map((text, index) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton component={Link} to={item.path} sx={{ '&:hover': { backgroundColor: 'primary.main' } }}>
+                <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+                {item.text}
               </ListItemButton>
             </ListItem>
           ))}
+        </List>
+        
+        <List>
+            <ListItem disablePadding>
+                <ListItemButton onClick={logout} sx={{ '&:hover': { backgroundColor: 'primary.main' } }}>
+                    <ListItemIcon sx={{ color: 'white' }}>
+                        <LogoutIcon />
+                    </ListItemIcon>
+                    Logout {user && `(${user.email})`}
+                </ListItemButton>
+            </ListItem>
         </List>
       </Drawer>
 
@@ -55,7 +68,9 @@ function AppLayout() {
         }}
       >
         <Toolbar sx={{ justifyContent: 'flex-end' }}>
-          <Avatar sx={{ bgcolor: 'secondary.main' }}>G</Avatar>
+          <Avatar sx={{ bgcolor: 'secondary.main' }}>
+            {user ? user.email.charAt(0).toUpperCase() : 'G'}
+          </Avatar>
         </Toolbar>
         <Outlet /> 
       </Box>
