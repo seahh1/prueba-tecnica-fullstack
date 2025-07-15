@@ -18,11 +18,11 @@ resource "null_resource" "set_ssh_key_permissions_windows" {
     command = "icacls ${path.root}/${var.private_key_path} /inheritance:r /grant:r \"${env("USERNAME")}\":F"
     interpreter = ["powershell", "-command"]
   }
-  depends_on = [aws_key_pair.deployer_key] 
+  depends_on = [aws_key_pair.deployer_key]
 }
 
 data "aws_vpc" "default" {
-  default = true # 
+  default = true
 }
 
 data "aws_subnet" "default_public" {
@@ -59,7 +59,7 @@ resource "aws_security_group" "app_security_group" {
     description = "Allow SSH from anywhere"
     from_port   = 22 
     to_port     = 22
-    protocol    = "tcp"     
+    protocol    = "tcp"         
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -81,5 +81,56 @@ resource "aws_security_group" "app_security_group" {
 
   tags = {
     Name = "app-security-group"
+  }
+}
+
+
+resource "aws_instance" "main_app_server" {
+  ami                         = var.ami_id        
+  instance_type               = var.instance_type 
+  key_name                    = aws_key_pair.deployer_key.key_name 
+  vpc_security_group_ids      = [aws_security_group.app_security_group.id]
+  subnet_id                   = data.aws_subnet.default_public.id
+  associate_public_ip_address = true
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -euxo pipefail # Salir inmediatamente si un comando falla
+
+              sudo apt update -y
+              sudo apt install -y git
+
+              sudo apt-get update -y
+              sudo apt-get install -y ca-certificates curl gnupg lsb-release
+              sudo mkdir -p /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update -y
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+              sudo usermod -aG docker ubuntu
+
+              newgrp docker || true
+
+              REPO_URL="https://github.com/seahh1/prueba-tecnica-fullstack.git"
+              APP_DIR="/home/ubuntu/app"
+
+              if [ -d "$APP_DIR" ]; then
+                  sudo rm -rf "$APP_DIR"
+              fi
+
+              git clone $REPO_URL $APP_DIR
+
+              cd $APP_DIR/infrastructure
+
+              docker compose up --build -d
+
+              EOF
+  tags = {
+    Name        = "user-management-app-server"
+    Environment = "Development"
+    Project     = "UserManagement"
   }
 }
