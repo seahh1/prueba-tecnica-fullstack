@@ -84,7 +84,6 @@ El proyecto está organizado como un **monorepo**, dividiendo la aplicación en 
 ├── AI_PROMPTS.md # Registro de prompts de IA
 └── AI_WORKFLOW.md # Descripción del flujo de trabajo con IA
 
-**Tecnologías Utilizadas (Las herramientas específicas)**
 
 ```markdown
 ## 🛠️ Tecnologías Utilizadas
@@ -106,7 +105,7 @@ Para levantar la aplicación completa en tu máquina local usando Docker Compose
 
 2.  **Clonar el Repositorio:**
     ```bash
-    git clone https://github.com/tu-usuario/prueba-tecnica-fullstack.git
+    git clone https://github.com/seahh1/prueba-tecnica-fullstack.git
     cd prueba-tecnica-fullstack
     ```
 
@@ -193,9 +192,8 @@ src/utils           | 100     | 100      | 100     | 100     |
 asyncHandler.js     | 100     | 100      | 100     | 100     |
 --------------------|---------|----------|---------|---------|-------------------
 
-*(Puedes tomar una captura de pantalla del reporte HTML si prefieres una imagen).*
 
-**7. Despliegue en AWS con Terraform (¡El Gran Diferenciador!)**
+**7. Despliegue en AWS con Terraform**
 
 ```markdown
 ## ☁️ Despliegue en AWS con Terraform
