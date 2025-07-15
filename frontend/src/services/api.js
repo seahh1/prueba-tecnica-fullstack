@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, 
+  baseURL: import.meta.env.PROD ? '/api' : import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +10,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('jwt_token'); 
+    const token = localStorage.getItem('jwt_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,13 +34,13 @@ api.interceptors.response.use(
           toast.error(data.message || 'Sesión expirada o no autorizada. Por favor, inicia sesión de nuevo.');
           localStorage.removeItem('jwt_token');
           break;
-        case 404:
+        case 404: 
           toast.error(data.message || 'Recurso no encontrado.');
           break;
-        case 400:
+        case 400: 
           toast.error(data.message || 'Solicitud inválida. Verifica los datos.');
           break;
-        case 500:
+        case 500: 
           toast.error(data.message || 'Error interno del servidor. Inténtalo de nuevo más tarde.');
           break;
         default:
@@ -54,5 +54,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-export default api;
