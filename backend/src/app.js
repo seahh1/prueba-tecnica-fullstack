@@ -14,8 +14,10 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(helmet()); 
-app.use(cors()); 
+app.set('trust proxy', 1);
+
+app.use(helmet());
+app.use(cors());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -26,9 +28,9 @@ const limiter = rateLimit({
 app.use(limiter);
 
 
-app.use(express.json()); 
+app.use(express.json());
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev')); 
+  app.use(morgan('dev'));
 }
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));

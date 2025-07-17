@@ -32,6 +32,7 @@ Este proyecto es una aplicación fullstack diseñada para la gestión eficiente 
     -   Grupo de seguridad (Security Group) para control de tráfico.
     -   Instancia EC2 para alojar la aplicación (backend y frontend en contenedores).
     -   Configuración de `user_data` para automatizar la instalación de Docker y el despliegue de la aplicación al iniciar la EC2.
+    -   **Gestión de Secretos Segura:** Integración con AWS Secrets Manager para inyectar variables de entorno en producción.
 
 ## 🏗️ Arquitectura y Estructura del Proyecto
 
@@ -71,7 +72,7 @@ El proyecto está organizado como un **monorepo**, dividiendo la aplicación en 
 │ │ ├── main.tf # Recursos principales de AWS
 │ │ ├── variables.tf # Variables de configuración
 │ │ └── outputs.tf # Salidas del despliegue (ej. IP de EC2)
-│ └── docker-compose.yml # Orquestación de contenedores Docker local
+│ └── docker-compose.yml # Orquestación de contenedores Docker
 ├── docs/ # Documentación adicional del proyecto
 │ ├── API.md # Detalles de la API (puedes referenciar a Swagger)
 │ ├── DEPLOYMENT.md # Guía de despliegue en AWS
@@ -94,60 +95,40 @@ El proyecto está organizado como un **monorepo**, dividiendo la aplicación en 
 -   **Control de Versiones:** Git, GitHub.
 -   **Otros:** ESLint, Prettier (para calidad de código).
 
-## 🚀 Instalación y Ejecución Local
+## 🚀 Despliegue de la Aplicación en AWS
 
-Para levantar la aplicación completa en tu máquina local usando Docker Compose:
+Esta aplicación está diseñada para ser desplegada en AWS usando un flujo de Infraestructura como Código (IaC) con Terraform y Docker. No se recomienda un flujo de ejecución local con `docker-compose` ya que la configuración está optimizada para la inyección de secretos desde AWS Secrets Manager.
+
+**Para una guía de despliegue detallada paso a paso, por favor consulta [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).**
+
+A continuación, un resumen rápido del proceso:
 
 1.  **Requisitos Previos:**
-    *   Docker Desktop instalado y en ejecución (asegúrate de que el servicio de Docker esté activo).
-    *   Git instalado.
-    *   Node.js (v18+) y npm (o yarn) si deseas ejecutar los servicios individualmente o instalar dependencias fuera de Docker.
+    *   Tener una cuenta de AWS, AWS CLI, Terraform CLI y un par de claves SSH configurados.
 
-2.  **Clonar el Repositorio:**
+2.  **Configurar Secretos:**
+    *   Almacenar todas las variables de entorno necesarias (credenciales de DB, secretos de JWT, usuario admin) en **AWS Secrets Manager**.
+
+3.  **Configurar Variables de Terraform:**
+    *   Crear un archivo `infrastructure/terraform/terraform.tfvars` (que no está en Git) para definir tu región de AWS, el ID de la AMI y las rutas a tus claves SSH.
+
+4.  **Ejecutar Terraform:**
+    *   Desde la carpeta `infrastructure/terraform`, ejecuta los siguientes comandos:
     ```bash
-    git clone https://github.com/seahh1/prueba-tecnica-fullstack.git
-    cd prueba-tecnica-fullstack
+    # Inicializa Terraform y descarga el proveedor de AWS
+    terraform init
+
+    # Revisa el plan de ejecución (opcional pero recomendado)
+    terraform plan
+
+    # Aplica los cambios y provisiona la infraestructura
+    terraform apply
     ```
 
-3.  **Configuración de Variables de Entorno:**
-    *   Crea un archivo `.env` en la raíz de la carpeta `backend` (`backend/.env`) con el siguiente contenido:
-        ```env
-        PORT=5000
-        MONGO_URI=mongodb://db:27017/user_management_db
-        JWT_SECRET=TU_SECRETO_PARA_JWT_QUE_SEA_LARGO_Y_ALEATORIO
-        JWT_EXPIRE=1d
-        ```
-    *   Crea un archivo `.env` en la raíz de la carpeta `frontend` (`frontend/.env`) con el siguiente contenido:
-        ```env
-        VITE_API_BASE_URL=http://localhost:5000/api
-        ```
-    *   **Importante:** Nunca subas estos archivos `.env` al repositorio Git. Ya están en el `.gitignore`.
-
-4.  **Levantar la Aplicación con Docker Compose:**
-    *   Desde la raíz del proyecto (donde están las carpetas `backend`, `frontend`, `infrastructure`):
-    ```bash
-    docker compose -f infrastructure/docker-compose.yml up --build -d
-    ```
-    *   Este comando construirá las imágenes Docker para el backend y el frontend, descargará la imagen de MongoDB y levantará todos los servicios. `--build` asegura que se reconstruyan las imágenes si hay cambios. `-d` ejecuta los contenedores en segundo plano.
-
-5.  **Acceso a la Aplicación:**
-    *   **Frontend:** Abre tu navegador y ve a `http://localhost:3000`
-    *   **Backend API:** `http://localhost:5000/api/health` (debería mostrar `{"status":"OK"}`)
-    *   **Documentación Swagger UI:** `http://localhost:5000/api-docs`
-
-6.  **Detener y Eliminar Contenedores:**
-    *   Para detener los servicios:
-        ```bash
-        docker compose -f infrastructure/docker-compose.yml stop
-        ```
-    *   Para detener y eliminar los contenedores y sus redes (manteniendo volúmenes para persistir datos):
-        ```bash
-        docker compose -f infrastructure/docker-compose.yml down
-        ```
-    *   Para eliminar también los volúmenes (borrar los datos de la DB):
-        ```bash
-        docker compose -f infrastructure/docker-compose.yml down --volumes
-        ```
+5.  **Verificación:**
+    *   Una vez que `terraform apply` finalice, te proporcionará la IP pública de la instancia EC2.
+    *   Accede al frontend en `http://<IP_PÚBLICA_DE_LA_EC2>`.
+    *   Inicia sesión con las credenciales del usuario administrador que definiste en AWS Secrets Manager.
 ## 🧪 Pruebas
 
 El backend cuenta con una suite comprehensiva de pruebas unitarias y de integración, asegurando la robustez y el correcto funcionamiento de la API.
@@ -192,66 +173,9 @@ src/utils           | 100     | 100      | 100     | 100     |
 asyncHandler.js     | 100     | 100      | 100     | 100     |
 --------------------|---------|----------|---------|---------|-------------------
 
-
-**7. Despliegue en AWS con Terraform**
-
-```markdown
-## ☁️ Despliegue en AWS con Terraform
-
-La infraestructura de la aplicación puede ser provisionada en AWS utilizando Terraform, siguiendo un enfoque de Infraestructura como Código (IaC).
-
-**Arquitectura de Despliegue:**
--   Una Virtual Private Cloud (VPC) dedicada con una Subnet pública.
--   Un Internet Gateway para permitir la comunicación con Internet.
--   Un Security Group (firewall) configurado para permitir el tráfico HTTP (puerto 80), HTTPS (si aplica), SSH (puerto 22) y el puerto de la API (5000).
--   Una instancia EC2 (Ubuntu 22.04 LTS, t2.medium) que actuará como host para los contenedores Docker.
--   Docker y Docker Compose se instalan automáticamente en la EC2 mediante `user_data` al iniciar la instancia.
--   La aplicación completa (backend, frontend y MongoDB) se levanta en contenedores Docker en la EC2.
-
-**Requisitos Previos para el Despliegue:**
-1.  Tener una cuenta de AWS con credenciales configuradas (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) en tu máquina local. Se recomienda configurar el AWS CLI y que el usuario IAM tenga los permisos necesarios (ej. `AdministratorAccess` para esta prueba, o permisos específicos para EC2, VPC, Security Groups).
-2.  Tener Terraform CLI instalado.
-3.  Un par de claves SSH para EC2. Asegúrate de tener el archivo `.pem` en un lugar seguro y la clave pública (`.pub`) referenciada correctamente en `infrastructure/terraform/main.tf` (`aws_key_pair`).
-
-**Pasos para el Despliegue:**
-
-1.  **Navega a la carpeta de Terraform:**
-    ```bash
-    cd infrastructure/terraform
-    ```
-
-2.  **Inicializa Terraform:**
-    ```bash
-    terraform init
-    ```
-    *   Esto descargará los plugins necesarios para AWS.
-
-3.  **Planifica el Despliegue:**
-    ```bash
-    terraform plan
-    ```
-    *   Este comando te mostrará un resumen de los recursos que Terraform creará, modificará o destruirá. Revisa cuidadosamente esta salida.
-
-4.  **Aplica el Despliegue:**
-    ```bash
-    terraform apply --auto-approve
-    ```
-    *   Este comando provisionará la infraestructura en tu cuenta de AWS. `auto-approve` confirma la operación sin pedirte confirmación manual (úsalo con precaución en producción). Este proceso puede tardar unos minutos.
-
-5.  **Acceso a la Aplicación Desplegada:**
-    *   Una vez que `terraform apply` finalice, mostrará las salidas configuradas en `outputs.tf`. Busca `ec2_public_ip` y `ec2_public_dns`.
-    *   Accede al **Frontend** a través de: `http://<ec2_public_ip_o_dns>:3000` (el puerto 3000 es el que mapeamos externamente).
-    *   Accede a la **Documentación Swagger UI** a través de: `http://<ec2_public_ip_o_dns>:5000/api-docs` (el puerto 5000 es el del backend).
-
-6.  **Destruir la Infraestructura (Limpieza):**
-    *   Para evitar cargos innecesarios en AWS, asegúrate de destruir todos los recursos una vez que hayas terminado con la prueba.
-    *   Desde la carpeta `infrastructure/terraform`:
-        ```bash
-        terraform destroy --auto-approve
-        ```
 ## 📚 Documentación Adicional
 
--   **API Endpoints:** Consulta la documentación interactiva de la API en [http://localhost:5000/api-docs](http://localhost:5000/api-docs) (local) o en `http://<IP_PÚBLICA_DE_EC2>:5000/api-docs` (desplegado).
+-   **API Endpoints:** Una vez desplegada la aplicación, consulta la documentación interactiva en `http://<IP_PÚBLICA_DE_EC2>/api-docs`.
 -   **Diseño de Arquitectura:** Más detalles sobre las decisiones de diseño y patrones utilizados en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 -   **Guía de Despliegue Detallada:** Información adicional sobre el proceso de despliegue en [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 ## 📞 Contacto
