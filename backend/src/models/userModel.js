@@ -22,6 +22,16 @@ const UserSchema = new Schema(
       required: [true, 'La contraseña es obligatoria.'],
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres.'],
     },
+    estatus: {
+      type: String,
+      enum: ['Active', 'Inactive'], 
+      default: 'Active',
+    },
+    permisos: {
+      type: String,
+      enum: ['Operativo', 'Full', 'Basico'],
+      default: 'Basic',
+    },
   },
   {
     timestamps: true,

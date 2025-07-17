@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Stack, TextField, Select, MenuItem, Alert } from '@mui/material';
+import { Box, Typography, Button, Stack, TextField, Select, MenuItem, Alert, CircularProgress, Chip, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,7 +12,7 @@ function UserManagementPage() {
   const { users, isLoading, error, pagination, setPagination, searchTerm, setSearchTerm, permissionFilter, setPermissionFilter, deleteUser } = useUsers();
 
   const [openModal, setOpenModal] = useState(false);
-  const [userToEdit, setUserToEdit] = useState(null);
+  const [userToEdit, setUserToEdit] = useState(null); 
 
   const handleOpenCreateModal = () => {
     setUserToEdit(null); 
@@ -26,7 +26,7 @@ function UserManagementPage() {
 
   const handleCloseModal = () => {
     setOpenModal(false);
-    setUserToEdit(null);
+    setUserToEdit(null); 
   };
 
   const handleDeleteUser = async (id) => {
@@ -39,13 +39,9 @@ function UserManagementPage() {
   };
   
   const columns = [
+    { field: 'name', headerName: 'Nombre', flex: 1 },
     { field: 'email', headerName: 'Email', flex: 1.5 },
-    { field: 'nombre', headerName: 'Nombre', flex: 1 },
-    { field: 'banco', headerName: 'Banco', flex: 1 },
-    { 
-      field: 'estatus', 
-      headerName: 'Estatus', 
-      flex: 0.7,
+    { field: 'estatus', headerName: 'Estatus', flex: 0.7,
       renderCell: (params) => (
         <Chip
           label={params.value}
@@ -62,7 +58,7 @@ function UserManagementPage() {
     flex: 0.8,
     soportable: false,
     filterable: false,
-    renderCell: (paramas) => (
+    renderCell: (params) => (
       <Box>
           <IconButton color="primary" onClick={() => handleOpenEditModal(params.row)}>
             <EditIcon />
@@ -123,9 +119,10 @@ function UserManagementPage() {
           <DataGrid
             rows={users}
             columns={columns}
+            getRowId={(row) => row._id}
             pageSize={pagination.limit}
             rowCount={pagination.totalPages * pagination.limit}
-            paginationMode="server" 
+            paginationMode="server"
             onPageChange={(newPage) => setPagination(prev => ({ ...prev, page: newPage + 1 }))}
             onPageSizeChange={(newPageSize) => setPagination(prev => ({ ...prev, limit: newPageSize }))}
             page={pagination.page - 1} 

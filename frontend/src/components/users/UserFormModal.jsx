@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Button, Select, MenuItem, FormControl, InputLabel, CircularProgress,
-  Typography,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Select, MenuItem, FormControl, InputLabel, CircularProgress,Typography, } from '@mui/material';
 import { useUsers } from '../../store/UserContext';
 import { toast } from 'react-toastify';
 
@@ -13,7 +9,8 @@ function UserFormModal({ open, handleClose, userToEdit }) {
     name: '',
     email: '',
     password: '',
-    permissions: 'Operational',
+    permisos: 'Basic',
+    estatus: 'Active',
   });
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -23,12 +20,13 @@ function UserFormModal({ open, handleClose, userToEdit }) {
         name: userToEdit.name || '',
         email: userToEdit.email || '',
         password: '',
-        permissions: userToEdit.permissions || 'Operational',
+        permisos: userToEdit.permisos || 'Basic',
+        estatus: userToEdit.estatus || 'Active',
       });
       setIsEditMode(true);
     } else {
       setFormData({
-        name: '', email: '', password: '', permissions: 'Operational',
+        name: '', email: '', password: '', permisos: 'Operational', estatus: 'Active',
       });
       setIsEditMode(false);
     }
@@ -108,14 +106,26 @@ function UserFormModal({ open, handleClose, userToEdit }) {
         <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
           <InputLabel>Permisos *</InputLabel>
           <Select
-            name="permissions"
-            value={formData.permissions}
+            name="permisos"
+            value={formData.permisos}
             label="Permisos *"
             onChange={handleChange}
           >
             <MenuItem value="Operational">Operational</MenuItem>
             <MenuItem value="Full">Full</MenuItem>
-            <MenuItem value="Basic">Basic</MenuItem>
+            <MenuItem value="Basic">Básico</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Estatus *</InputLabel>
+          <Select
+            name="estatus"
+            value={formData.estatus}
+            label="Estatus *"
+            onChange={handleChange}
+          >
+            <MenuItem value="Active">Activo</MenuItem>
+            <MenuItem value="Inactive">Inactivo</MenuItem>
           </Select>
         </FormControl>
       </DialogContent>

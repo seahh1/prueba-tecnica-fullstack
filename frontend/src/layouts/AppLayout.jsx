@@ -1,5 +1,5 @@
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, Toolbar, Avatar } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, Toolbar, Avatar, Typography } from '@mui/material';
+import { Outlet, Link } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -36,8 +36,8 @@ function AppLayout() {
             { text: 'Usuarios', icon: <PeopleIcon />, path: '/' },
             { text: 'Informes', icon: <BarChartIcon />, path: '/reports' },
              { text: 'Configuración', icon: <SettingsIcon />, path: '/settings' }
-          ].map((text, index) => (
-            <ListItem key={item.text} disablePadding>
+          ].map((item) => (
+            <ListItem key={item.text + item.path} disablePadding>
               <ListItemButton component={Link} to={item.path} sx={{ '&:hover': { backgroundColor: 'primary.main' } }}>
                 <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
                 {item.text}
@@ -69,7 +69,7 @@ function AppLayout() {
       >
         <Toolbar sx={{ justifyContent: 'flex-end' }}>
           <Avatar sx={{ bgcolor: 'secondary.main' }}>
-            {user ? user.email.charAt(0).toUpperCase() : 'G'}
+            {user && user.email ? user.email.charAt(0).toUpperCase() : 'G'}
           </Avatar>
         </Toolbar>
         <Outlet /> 

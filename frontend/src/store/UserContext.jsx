@@ -1,10 +1,12 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import * as userService from '../services/userService';
 import { toast } from 'react-toastify';
+import { useAuth } from './AuthContext'; 
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
+  const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -145,7 +145,7 @@ Para ejecutar las pruebas y generar un reporte de cobertura:
     ```
 3.  Podrás ver el resumen de la cobertura directamente en la terminal. Para un reporte HTML detallado, abre `backend/coverage/lcov-report/index.html` en tu navegador.
 
-**Cobertura Actual del Backend:** (Aquí pegarías la tabla de Jest que obtuviste, la del 87.71%)
+**Cobertura Actual del Backend:**
 
 --------------------|---------|----------|---------|---------|-------------------
 File                | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s

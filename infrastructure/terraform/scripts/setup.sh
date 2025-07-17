@@ -39,7 +39,6 @@ echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > .env
 chown ubuntu:ubuntu .env
 
 echo ">>> Levantando la aplicación con Docker Compose..."
-
 sudo -u ubuntu docker compose -f infrastructure/docker-compose.yml --env-file .env up --build -d
 
 
@@ -47,7 +46,6 @@ echo ">>> Esperando 30 segundos para que la base de datos se inicie..."
 sleep 30
 
 echo ">>> Ejecutando script de seeding..."
-
-sudo -u ubuntu docker compose -f infrastructure/docker-compose.yml exec -T backend npm run seed
+sudo -u ubuntu docker compose -f infrastructure/docker-compose.yml --env-file .env exec -T backend npm run seed
 
 echo ">>> ¡Despliegue completado!"
