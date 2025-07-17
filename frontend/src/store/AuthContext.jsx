@@ -25,10 +25,10 @@ export const AuthProvider = ({ children }) => {
       const data = await apiLogin(email, password);
       localStorage.setItem('jwt_token', data.token);
       setToken(data.token);
-      
+
       const decoded = JSON.parse(atob(data.token.split('.')[1]));
       setUser({ id: decoded.user.id, email: decoded.user.email });
-      
+
       toast.success('¡Inicio de sesión exitoso!');
       navigate('/');
       return true;

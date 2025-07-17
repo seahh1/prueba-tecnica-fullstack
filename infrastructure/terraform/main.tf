@@ -2,8 +2,15 @@ provider "aws" {
   region = var.aws_region
 }
 
+<<<<<<< HEAD
 data "aws_key_pair" "deployer_key" {
   key_name = var.key_name
+=======
+# Data block para referenciar una clave SSH que ya existe en tu cuenta de AWS.
+resource "aws_key_pair" "deployer_key" {
+  key_name   = var.key_name
+  public_key = file(var.public_key_path)
+>>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 }
 
 data "aws_vpc" "default" {
@@ -77,14 +84,68 @@ resource "aws_security_group" "app_security_group" {
   }
 }
 
+<<<<<<< HEAD
+=======
+resource "aws_iam_policy" "secrets_manager_read_policy" {
+  name        = "SecretsManagerReadAccessForApp-${random_id.suffix.hex}"
+  description = "Permite leer el secreto de la aplicación desde Secrets Manager"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "secretsmanager:GetSecretValue",
+        Resource = data.aws_secretsmanager_secret.app_secrets.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2-app-role-${random_id.suffix.hex}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = { Service = "ec2.amazonaws.com" },
+        Action    = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_secrets_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.secrets_manager_read_policy.arn
+}
+
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2-app-instance-profile-${random_id.suffix.hex}"
+  role = aws_iam_role.ec2_role.name
+}
+
+data "aws_secretsmanager_secret" "app_secrets" {
+  name = "app/user-management/prod"
+}
+
+# --- Instancia EC2 de la Aplicación ---
+>>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 resource "aws_instance" "main_app_server" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  key_name                    = data.aws_key_pair.deployer_key.key_name
+  key_name                    = aws_key_pair.deployer_key.key_name
   vpc_security_group_ids      = [aws_security_group.app_security_group.id]
   subnet_id                   = data.aws_subnet.default_public.id
   associate_public_ip_address = true
+
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+
+  depends_on = [
+    aws_iam_role_policy_attachment.attach_secrets_policy
+  ]
   
+<<<<<<< HEAD
   user_data = <<-EOF
               #!/bin/bash
               set -euxo pipefail
@@ -115,6 +176,9 @@ resource "aws_instance" "main_app_server" {
               su - ubuntu -c "cd $${APP_DIR}/infrastructure && docker compose up --build -d"
 
               EOF
+=======
+  user_data = file("${path.module}/scripts/setup.sh")
+>>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 
   tags = {
     Name        = "user-management-app-server"

@@ -4,6 +4,7 @@
   "description": "Backend API for the User Management application",
   "main": "src/server",
   "scripts": {
+    "seed": "node src/scripts/seed.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",

@@ -2,9 +2,5 @@
 
 .terraform/
 
-<<<<<<< HEAD
-=======
-# Archivos de estado de Terraform (contienen el estado de infraestructura)
->>>>>>> 5d5100e (feat(iac): provision EC2 instance with Docker and app deployment via user_data)
 *.tfstate
 *.tfstate.*
