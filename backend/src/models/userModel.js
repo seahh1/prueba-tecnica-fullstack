@@ -38,6 +38,12 @@ const UserSchema = new Schema(
   }
 );
 
+UserSchema.index({ email: 1 }, { unique: true });
+
+UserSchema.index({ name: 1 });
+
+UserSchema.index({ createdAt: -1 });
+
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();

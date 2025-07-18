@@ -23,10 +23,10 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const data = await apiLogin(email, password);
-      localStorage.setItem('jwt_token', data.token);
-      setToken(data.token);
+      localStorage.setItem('jwt_token', data.accessToken);
+      setToken(data.accessToken);
 
-      const decoded = JSON.parse(atob(data.token.split('.')[1]));
+      const decoded = JSON.parse(atob(data.accessToken.split('.')[1]));
       setUser({ id: decoded.user.id, email: decoded.user.email });
 
       toast.success('¡Inicio de sesión exitoso!');
