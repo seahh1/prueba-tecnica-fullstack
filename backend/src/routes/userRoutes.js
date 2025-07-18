@@ -101,7 +101,7 @@ router.use(protect);
  * @swagger
  * /api/users:
  *   get:
- *     summary: Obtiene una lista de usuarios con paginación.
+ *     summary: Obtiene una lista de usuarios con paginación, búsqueda y ordenamiento
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -111,16 +111,27 @@ router.use(protect);
  *         schema:
  *           type: integer
  *           default: 1
- *         description: Número de página.
+ *         description: Número de página
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Número de resultados por página.
+ *         description: Número de resultados por página
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Término de búsqueda para nombre o email
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           default: "-createdAt"
+ *         description: Campo para ordenar (ej. 'name', '-createdAt' para descendente)
  *     responses:
  *       '200':
- *         description: Lista de usuarios obtenida exitosamente.
+ *         description: Lista de usuarios obtenida exitosamente
  *         content:
  *           application/json:
  *             schema:
@@ -131,13 +142,13 @@ router.use(protect);
  *                 users:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/User'
+ *                     $ref: '#/components/schemas/User' 
  *                 totalPages:
  *                   type: integer
  *                 currentPage:
  *                   type: integer
- *       '401':
- *         description: No autorizado (token no válido o no proporcionado).
+ *                 totalUsers:
+ *                   type: integer
  */
 router.get('/', userController.getUsers);
 

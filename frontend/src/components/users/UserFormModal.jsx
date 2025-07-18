@@ -26,7 +26,7 @@ function UserFormModal({ open, handleClose, userToEdit }) {
       setIsEditMode(true);
     } else {
       setFormData({
-        name: '', email: '', password: '', permisos: 'Operational', estatus: 'Active',
+        name: '', email: '', password: '', permisos: 'Operativo', estatus: 'Active',
       });
       setIsEditMode(false);
     }
@@ -111,9 +111,9 @@ function UserFormModal({ open, handleClose, userToEdit }) {
             label="Permisos *"
             onChange={handleChange}
           >
-            <MenuItem value="Operational">Operational</MenuItem>
+            <MenuItem value="Operativo">Operativo</MenuItem>
             <MenuItem value="Full">Full</MenuItem>
-            <MenuItem value="Basic">Básico</MenuItem>
+            <MenuItem value="Basico">Básico</MenuItem>
           </Select>
         </FormControl>
         <FormControl fullWidth margin="dense">

@@ -14,9 +14,16 @@ const createNewUser = async (req, res) => {
 };
 
 const getUsers = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-  const result = await userService.getAllUsers(page, limit);
+  const queryOptions = {
+    page: parseInt(req.query.page, 10),
+    limit: parseInt(req.query.limit, 10),
+    search: req.query.search,
+    sort: req.query.sort,
+  };
+
+
+  const result = await userService.getAllUsers(queryOptions);
+
   res.status(200).json({ success: true, ...result });
 });
 
