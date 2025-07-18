@@ -29,7 +29,7 @@ const UserSchema = new Schema(
     },
     permisos: {
       type: String,
-      enum: ['Operativo', 'Full', 'Basico'],
+      enum: ['Operational', 'Full', 'Basic'],
       default: 'Basic',
     },
   },

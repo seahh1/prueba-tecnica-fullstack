@@ -13,20 +13,35 @@ const loginUser = async (email, password) => {
     throw new Error('Credenciales inválidas');
   }
 
-  const payload = {
-    user: {
-      id: user.id,
-      email: user.email,
-    },
-  };
-
-  const token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '1h',
+  const accessTokenPayload = { user: { id: user.id } };
+  const accessToken = jwt.sign(accessTokenPayload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || '15m',
+  });
+  
+  const refreshTokenPayload = { user: { id: user.id } };
+  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d',
   });
 
-  return token;
+  return { accessToken, refreshToken };
+};
+
+const refreshAccessToken = async (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    
+    const accessTokenPayload = { user: { id: decoded.user.id } };
+    const newAccessToken = jwt.sign(accessTokenPayload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRE || '15m',
+    });
+    
+    return newAccessToken;
+  } catch (error) {
+    throw new Error('Refresh token inválido o expirado.');
+  }
 };
 
 module.exports = {
   loginUser,
+  refreshAccessToken,
   };
