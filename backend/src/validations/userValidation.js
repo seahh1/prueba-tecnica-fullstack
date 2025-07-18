@@ -12,7 +12,7 @@ const createUserSchema = Joi.object({
       'any.required': `"nombre" es un campo requerido`,
     }),
   email: Joi.string()
-    .email({ tlds: { allow: false } })
+    .email({ tlds: { allow: false } }) 
     .required()
     .messages({
       'string.email': `"email" debe ser un email válido`,

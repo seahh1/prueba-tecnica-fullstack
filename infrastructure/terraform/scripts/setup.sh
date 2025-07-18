@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -euxo pipefail 
 
 echo ">>> Actualizando e instalando dependencias..."
 apt-get update -y
@@ -33,19 +33,27 @@ if [ -z "$SECRET_JSON" ]; then
     exit 1
 fi
 
+echo ">>> Creando archivo de entorno temporal para Docker Compose..."
+ENV_FILE="$APP_DIR/infrastructure/.env.docker.temp"
+
+echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' > "$ENV_FILE"
+
+if [ ! -s "$ENV_FILE" ]; then
+    echo "Error: El archivo .env.docker.temp está vacío o no se pudo crear." >&2
+    exit 1
+fi
+echo "Archivo de entorno generado en $ENV_FILE"
+
 echo ">>> Preparando el entorno y levantando la aplicación..."
 cd "$APP_DIR"
 
-export $(echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring|@sh)")|.[]' | tr '\n' ' ') && \
-sudo -E docker compose -f infrastructure/docker-compose.yml up --build -d
-
+sudo docker compose --env-file "$ENV_FILE" -f infrastructure/docker-compose.yml up --build -d
 
 echo ">>> Esperando 30 segundos para que la base de datos se inicie..."
 sleep 30
 
 echo ">>> Ejecutando script de seeding..."
 
-export $(echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring|@sh)")|.[]' | tr '\n' ' ') && \
-sudo -E docker compose -f infrastructure/docker-compose.yml exec -T backend npm run seed
+sudo docker compose --env-file "$ENV_FILE" -f infrastructure/docker-compose.yml exec -T backend npm run seed
 
 echo ">>> ¡Despliegue completado!"

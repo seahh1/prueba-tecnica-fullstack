@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const path = require('path');
 const User = require('../models/userModel');
 
 const seedAdminUser = async () => {

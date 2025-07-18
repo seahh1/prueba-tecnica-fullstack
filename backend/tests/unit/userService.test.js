@@ -20,7 +20,9 @@ describe('User Service', () => {
       await userService.createUser(userData1);
 
       const userData2 = { name: 'User 2', email: 'duplicate@example.com', password: 'password456' };
+
       await expect(userService.createUser(userData2)).rejects.toThrow();
     });
   });
+
 });

@@ -35,7 +35,9 @@ const getUserById = async (userId) => {
   return user;
 };
 
+
 const updateUserById = async (userId, updateData) => {
+
   const user = await User.findByIdAndUpdate(userId, updateData, {
     new: true,
     runValidators: true,

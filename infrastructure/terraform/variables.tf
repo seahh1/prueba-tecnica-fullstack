@@ -1,4 +1,3 @@
-
 variable "aws_region" {
   description = "Región de AWS donde desplegar los recursos."
   type        = string
@@ -19,7 +18,7 @@ variable "ami_id" {
 variable "key_name" {
   description = "Nombre del par de claves SSH en AWS."
   type        = string
-  default     = "my-app-key" 
+  default     = "my-app-key"
 }
 
 variable "public_key_path" {

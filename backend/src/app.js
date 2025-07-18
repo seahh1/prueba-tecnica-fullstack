@@ -12,17 +12,19 @@ const healthRoutes = require('./routes/health.routes');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const logger = require('./config/logger');
+
 
 const app = express();
 
+
 app.set('trust proxy', 1);
 
-app.use(helmet());
-app.use(cors());
-
+app.use(helmet()); 
+app.use(cors());   
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 100, 
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -30,10 +32,18 @@ app.use(limiter);
 
 
 app.use(express.json());
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
 app.use(cookieParser());
+
+const morganStream = {
+  write: (message) => logger.http(message.trim()),
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev', { stream: morganStream }));
+} else {
+  app.use(morgan('combined', { stream: morganStream }));
+}
+
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 

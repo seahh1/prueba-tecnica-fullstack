@@ -16,9 +16,11 @@ describe('User Endpoints', () => {
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password123' });
-
+    
     authToken = loginRes.body.token;
   });
+
+
 
   describe('GET /api/users', () => {
     it('debería obtener una lista de usuarios si está autenticado', async () => {
