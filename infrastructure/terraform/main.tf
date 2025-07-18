@@ -2,15 +2,9 @@ provider "aws" {
   region = var.aws_region
 }
 
-<<<<<<< HEAD
-data "aws_key_pair" "deployer_key" {
-  key_name = var.key_name
-=======
-# Data block para referenciar una clave SSH que ya existe en tu cuenta de AWS.
 resource "aws_key_pair" "deployer_key" {
   key_name   = var.key_name
   public_key = file(var.public_key_path)
->>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 }
 
 data "aws_vpc" "default" {
@@ -84,8 +78,6 @@ resource "aws_security_group" "app_security_group" {
   }
 }
 
-<<<<<<< HEAD
-=======
 resource "aws_iam_policy" "secrets_manager_read_policy" {
   name        = "SecretsManagerReadAccessForApp-${random_id.suffix.hex}"
   description = "Permite leer el secreto de la aplicación desde Secrets Manager"
@@ -129,8 +121,6 @@ data "aws_secretsmanager_secret" "app_secrets" {
   name = "app/user-management/prod"
 }
 
-# --- Instancia EC2 de la Aplicación ---
->>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 resource "aws_instance" "main_app_server" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -145,40 +135,7 @@ resource "aws_instance" "main_app_server" {
     aws_iam_role_policy_attachment.attach_secrets_policy
   ]
   
-<<<<<<< HEAD
-  user_data = <<-EOF
-              #!/bin/bash
-              set -euxo pipefail
-
-              sudo apt-get update -y
-              sudo apt-get install -y git ca-certificates curl gnupg lsb-release
-
-              sudo mkdir -p /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-              sudo apt-get update -y
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-              sudo usermod -aG docker ubuntu
-
-              REPO_URL="https://github.com/seahh1/prueba-tecnica-fullstack.git"
-              APP_DIR="/home/ubuntu/app"
-              
-              if [ -d "$APP_DIR" ]; then
-                  sudo rm -rf "$APP_DIR"
-              fi
-              git clone $REPO_URL $APP_DIR
-
-              sudo chown -R ubuntu:ubuntu $APP_DIR
-              
-              su - ubuntu -c "cd $${APP_DIR}/infrastructure && docker compose up --build -d"
-
-              EOF
-=======
   user_data = file("${path.module}/scripts/setup.sh")
->>>>>>> 70862fb (despliegue para producción usando AWS Secrets Manager y env vars)
 
   tags = {
     Name        = "user-management-app-server"

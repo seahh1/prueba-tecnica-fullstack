@@ -4,10 +4,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const createNewUser = async (req, res) => {
   const { name, email, password, permisos, estatus } = req.body;
 
-<<<<<<< HEAD
-  const newUser = await userService.createUser({ name, email, password });
-=======
-  // Llamada al servicio para crear el usuario
   const newUser = await userService.createUser({ 
     name,
     email,
@@ -15,7 +11,6 @@ const createNewUser = async (req, res) => {
     permisos,
     estatus, 
   });
->>>>>>> 8fda9bd (feat(auth): implement refresh token mechanism for enhanced security)
 
   res.status(201).json({
     success: true,

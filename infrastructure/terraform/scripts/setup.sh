@@ -33,19 +33,19 @@ if [ -z "$SECRET_JSON" ]; then
     exit 1
 fi
 
-echo ">>> Creando archivo .env en la raíz del proyecto clonado..."
+echo ">>> Preparando el entorno y levantando la aplicación..."
 cd "$APP_DIR"
-echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > .env
-chown ubuntu:ubuntu .env
 
-echo ">>> Levantando la aplicación con Docker Compose..."
-sudo -u ubuntu docker compose -f infrastructure/docker-compose.yml --env-file .env up --build -d
+export $(echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring|@sh)")|.[]' | tr '\n' ' ') && \
+sudo -E docker compose -f infrastructure/docker-compose.yml up --build -d
 
 
 echo ">>> Esperando 30 segundos para que la base de datos se inicie..."
 sleep 30
 
 echo ">>> Ejecutando script de seeding..."
-sudo -u ubuntu docker compose -f infrastructure/docker-compose.yml --env-file .env exec -T backend npm run seed
+
+export $(echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring|@sh)")|.[]' | tr '\n' ' ') && \
+sudo -E docker compose -f infrastructure/docker-compose.yml exec -T backend npm run seed
 
 echo ">>> ¡Despliegue completado!"

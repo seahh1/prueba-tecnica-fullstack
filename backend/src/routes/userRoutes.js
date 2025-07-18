@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
+const validate = require('../middleware/validation');
+const { createUserSchema, updateUserSchema } = require('../validations/userValidation');
 
 /**
  * @swagger
@@ -93,7 +95,7 @@ const { protect } = require('../middleware/auth');
  *       '400':
  *         description: Datos de entrada inválidos.
  */
-router.post('/', userController.createNewUser);
+router.post('/', validate(createUserSchema), userController.createNewUser);
 
 router.use(protect);
 
@@ -237,7 +239,7 @@ router
   .route('/:id')
 
   .get(userController.getUser)
-  .put(userController.updateUser)
+  .put(validate(updateUserSchema),userController.updateUser)
   .delete(userController.deleteUser);
 
 module.exports = router;

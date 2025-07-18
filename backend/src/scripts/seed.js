@@ -1,9 +1,6 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const path = require('path');
 const User = require('../models/userModel');
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const seedAdminUser = async () => {
   if (!process.env.MONGO_URI || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {

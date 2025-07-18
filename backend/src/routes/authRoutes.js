@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { login, refresh } = require('../controllers/authController');
+const validate = require('../middleware/validation');
+const { loginSchema } = require('../validations/userValidation');
 
 /**
  * @swagger
@@ -50,7 +52,7 @@ const { login, refresh } = require('../controllers/authController');
  *       '401':
  *         description: Credenciales inválidas.
  */
-router.post('/login', login);
+router.post('/login', validate(loginSchema), login);
 router.post('/refresh', refresh);
 
 module.exports = router;
