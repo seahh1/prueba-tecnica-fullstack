@@ -54,6 +54,6 @@ sleep 30
 
 echo ">>> Ejecutando script de seeding..."
 
-sudo docker compose --env-file "$ENV_FILE" -f infrastructure/docker-compose.yml exec -T backend npm run seed
+sudo docker compose --env-file "$ENV_FILE" -f infrastructure/docker-compose.yml exec -T backend npm run seed || true
 
 echo ">>> ¡Despliegue completado!"

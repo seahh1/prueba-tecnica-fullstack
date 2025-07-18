@@ -20,7 +20,17 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet()); 
+app.use(
+  helmet({
+    strictTransportSecurity: false,
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "upgrade-insecure-requests": null,
+      },
+    },
+  })
+);
 app.use(cors());   
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -54,3 +64,5 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
+
+module.exports = app;

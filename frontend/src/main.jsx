@@ -9,13 +9,21 @@ import theme from './utils/theme.js';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { AuthProvider } from './store/AuthContext.jsx';
+import { UserProvider } from './store/UserContext.jsx';
+import { BrowserRouter } from 'react-router-dom';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+    <BrowserRouter>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-
-      <App />
-
+      <AuthProvider>
+        <UserProvider>
+          <App />
+        </UserProvider>
+      </AuthProvider>
+      
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -29,5 +37,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         theme="colored"
       />
     </ThemeProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 );

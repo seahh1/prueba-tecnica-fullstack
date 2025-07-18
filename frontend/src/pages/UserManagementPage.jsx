@@ -56,7 +56,7 @@ function UserManagementPage() {
     field: 'acciones',
     headerName: 'Acciones',
     flex: 0.8,
-    soportable: false,
+    sortable: false,
     filterable: false,
     renderCell: (params) => (
       <Box>
@@ -141,3 +141,5 @@ function UserManagementPage() {
     </Box>
   );
 }
+
+export default UserManagementPage;
