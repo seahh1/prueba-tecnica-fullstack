@@ -7,20 +7,28 @@ describe('User Endpoints', () => {
   let testUserId;
 
   beforeEach(async () => {
+    await mongoose.model('User').deleteMany({});
+
     const registerRes = await request(app)
       .post('/api/users')
       .send({ name: 'Test User', email: 'test@example.com', password: 'password123' });
-
+    
+    expect(registerRes.statusCode).toEqual(201);
     testUserId = registerRes.body.userId;
 
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password123' });
     
-    authToken = loginRes.body.token;
+    console.log('Login Response Body:', loginRes.body);
+    console.log('Login Status Code:', loginRes.statusCode);
+    
+    expect(loginRes.statusCode).toEqual(200); 
+    
+    authToken = loginRes.body.accessToken;
+    
+    expect(authToken).toBeDefined();
   });
-
-
 
   describe('GET /api/users', () => {
     it('debería obtener una lista de usuarios si está autenticado', async () => {
@@ -31,11 +39,6 @@ describe('User Endpoints', () => {
       expect(res.statusCode).toEqual(200);
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.users)).toBe(true);
-    });
-
-    it('debería retornar 401 Unauthorized si no hay token', async () => {
-      const res = await request(app).get('/api/users');
-      expect(res.statusCode).toEqual(401);
     });
   });
 

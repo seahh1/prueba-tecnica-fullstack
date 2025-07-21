@@ -23,6 +23,7 @@ services:
       - db
     
     environment:
+      - NODE_ENV=production
       - PORT=5000
       - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@db:27017/${MONGO_DB}?authSource=admin
       - JWT_SECRET=${JWT_SECRET}

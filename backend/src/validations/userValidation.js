@@ -1,7 +1,8 @@
 const Joi = require('joi');
 
 const createUserSchema = Joi.object({
-  name: Joi.string()
+  name: Joi
+    .string()
     .min(3)
     .max(30)
     .required()
@@ -11,7 +12,8 @@ const createUserSchema = Joi.object({
       'string.min': `"nombre" debe tener una longitud mínima de {#limit} caracteres`,
       'any.required': `"nombre" es un campo requerido`,
     }),
-  email: Joi.string()
+  email: Joi
+    .string()
     .email({ tlds: { allow: false } }) 
     .required()
     .messages({
@@ -28,16 +30,19 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
-  name: Joi.string()
+  name: Joi
+    .string()
     .min(3)
     .max(30),
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string()
+  email: Joi
+    .string()
     .email({ tlds: { allow: false } })
     .required(),
-  password: Joi.string()
+  password: Joi
+    .string()
     .required(),
 });
 

@@ -54,33 +54,44 @@ El frontend está construido con React (usando Vite para un desarrollo y build r
         1.  **Request Interceptor**: Añade automáticamente el token JWT a la cabecera `Authorization` de cada petición saliente.
         2.  **Response Interceptor**: Maneja errores comunes de la API (como 401, 404, 500) de forma global, mostrando notificaciones al usuario con `react-toastify`.
 
-## 4. Flujo de Despliegue (IaC con Terraform y Docker)
+## 4. Arquitectura de Despliegue y CI/CD
 
-El despliegue está completamente automatizado utilizando Infraestructura como Código (IaC) para garantizar un proceso repetible, consistente y libre de errores manuales.
+El ciclo de vida del despliegue se gestiona a través de dos componentes principales que trabajan en conjunto: **Terraform** para la provisión de la infraestructura y **GitHub Actions** para la entrega continua del código de la aplicación.
 
-1.  **Terraform (`infrastructure/terraform/`)**:
-    -   El desarrollador ejecuta `terraform apply` desde su máquina local.
-    -   Terraform se comunica con AWS para provisionar los recursos definidos:
-        -   Un **Rol IAM** con una política que permite a la EC2 leer secretos de AWS Secrets Manager.
-        -   Una **Instancia EC2** (`t2.micro` para la capa gratuita) en la VPC por defecto.
-        -   Un **Grupo de Seguridad** que permite tráfico en los puertos 22 (SSH) y 80 (HTTP).
+### a. Provisión de Infraestructura con Terraform
 
-2.  **Script `user_data` en EC2**:
-    -   Al iniciar por primera vez, la instancia EC2 ejecuta automáticamente un script `user_data`. Este script es el "cerebro" del despliegue:
-        -   Instala dependencias críticas: `git`, `docker`, `docker-compose`, `jq`.
-        -   Clona la última versión del código desde el repositorio público de GitHub.
-        -   Usa el AWS CLI para **obtener los secretos** de la aplicación desde **AWS Secrets Manager**.
-        -   **Exporta estos secretos como variables de entorno** en el shell de la instancia.
-        -   Ejecuta `docker compose up --build -d` desde la carpeta `infrastructure/`.
+La infraestructura se define como código utilizando Terraform para garantizar un entorno repetible, consistente y versionado en AWS. Este proceso se ejecuta **una sola vez** para crear el entorno.
 
-3.  **Docker Compose (`infrastructure/docker-compose.yml`)**:
-    -   Docker Compose lee las variables de entorno que el `user_data` acaba de exportar.
-    -   Orquesta el levantamiento de tres contenedores:
-        -   **`db` (MongoDB)**: Inicia la base de datos, usando las credenciales del entorno.
-        -   **`backend` (Node.js)**: Construye la imagen del backend y la inicia, inyectando las variables de entorno (como `MONGO_URI` y `JWT_SECRET`).
-        -   **`frontend` (Nginx)**: Construye la aplicación React estática y la sirve a través de un servidor Nginx ligero.
+1.  **Definición de Recursos (`infrastructure/terraform/`)**:
+    -   **Recursos de Red y Seguridad**: Se utiliza la VPC por defecto de AWS y se crea un `aws_security_group` específico que permite el tráfico entrante en los puertos 22 (SSH) y 80 (HTTP).
+    -   **Recursos de Cómputo**: Se provisiona una instancia `aws_instance` de tipo `t2.micro` (dentro de la capa gratuita) con una AMI de Ubuntu Server 22.04 LTS.
+    -   **Permisos IAM**: Se crea un `aws_iam_role` con una política de confianza OIDC para GitHub Actions y un `aws_iam_instance_profile` para que la EC2 pueda acceder a AWS Secrets Manager.
 
-Este flujo garantiza un despliegue "desde cero" completamente automatizado con un solo comando (`terraform apply`).
+2.  **Automatización de Arranque (`user_data`)**:
+    -   La instancia EC2 está configurada con un script `user_data` que se ejecuta en el primer arranque. Este script es responsable de la configuración inicial del servidor:
+        -   Instalación de dependencias críticas como `git`, `Docker` y `Docker Compose`.
+        -   Clonación del repositorio de la aplicación desde GitHub.
+        -   Obtención de secretos desde **AWS Secrets Manager** y creación de un archivo de entorno (`.env`) temporal.
+        -   Ejecución inicial de `docker compose up --build -d` para levantar la aplicación.
+        -   Ejecución del script de "seeding" para crear el usuario administrador inicial.
+
+### b. Entrega Continua con GitHub Actions
+
+Una vez que la infraestructura está provisionada, las actualizaciones del código se despliegan automáticamente mediante un pipeline de CI/CD.
+
+1.  **Activador (`.github/workflows/deploy.yml`)**:
+    -   El workflow de GitHub Actions se activa automáticamente con cada `push` a la rama `main`.
+
+2.  **Flujo de Despliegue**:
+    -   **Autenticación Segura**: El pipeline se autentica con AWS utilizando OIDC y asume el rol IAM previamente creado, obteniendo credenciales temporales sin necesidad de almacenar secretos de AWS en GitHub.
+    -   **Conexión a EC2**: Se establece una conexión SSH segura con la instancia EC2 utilizando una clave privada almacenada como un secreto en GitHub.
+    -   **Actualización y Re-despliegue**: El script del workflow ejecuta los siguientes comandos en la instancia:
+        1.  `git pull` para obtener la versión más reciente del código.
+        2.  Refresca los secretos desde AWS Secrets Manager para crear el archivo de entorno.
+        3.  Ejecuta `sudo docker compose up --build -d`. Docker reconstruye inteligentemente solo las imágenes cuyos archivos fuente han cambiado y reinicia los servicios necesarios.
+        4.  `sudo docker image prune -af` para limpiar imágenes antiguas y optimizar el espacio en disco.
+
+Este flujo desacopla la gestión de la infraestructura (Terraform) de la gestión del código de la aplicación (GitHub Actions), permitiendo despliegues rápidos y seguros para cada cambio.
 
 ## 5. Gestión de Secretos
 

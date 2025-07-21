@@ -33,6 +33,7 @@ Este proyecto es una aplicación fullstack diseñada para la gestión eficiente 
     -   Instancia EC2 para alojar la aplicación (backend y frontend en contenedores).
     -   Configuración de `user_data` para automatizar la instalación de Docker y el despliegue de la aplicación al iniciar la EC2.
     -   **Gestión de Secretos Segura:** Integración con AWS Secrets Manager para inyectar variables de entorno en producción.
+    -   **CI/CD con GitHub Actions:** Pipeline de despliegue continuo que se activa con cada `push` a la rama `main` para actualizar automáticamente la aplicación en la EC2.
 
 ## 🏗️ Arquitectura y Estructura del Proyecto
 
@@ -79,7 +80,7 @@ El proyecto está organizado como un **monorepo**, dividiendo la aplicación en 
 │ └── ARCHITECTURE.md # Decisiones de diseño arquitectónico
 ├── .github/ # Configuración de GitHub (workflows CI/CD si se implementan)
 │ └── workflows/
-│ └── ci-cd.yml
+│ └── deploy.yml
 ├── .gitignore # Reglas para ignorar archivos en Git
 ├── README.md # Este archivo
 ├── AI_PROMPTS.md # Registro de prompts de IA
@@ -91,39 +92,44 @@ El proyecto está organizado como un **monorepo**, dividiendo la aplicación en 
 
 -   **Backend:** Node.js, Express, MongoDB (Mongoose), JSON Web Tokens (JWT), Jest, Supertest, Swagger/OpenAPI.
 -   **Frontend:** React.js, Vite, Material-UI (MUI), Axios, React Router DOM, React Toastify.
--   **DevOps/IaC:** Docker, Docker Compose, Terraform (para AWS).
+-   **DevOps/CI/CD:** Docker, Docker Compose, Terraform (para AWS), GitHub Actions.
 -   **Control de Versiones:** Git, GitHub.
--   **Otros:** ESLint, Prettier (para calidad de código).
 
-## 🚀 Despliegue de la Aplicación en AWS
+## 🚀 Flujo de Despliegue (IaC + CI/CD)
 
-Esta aplicación está diseñada para ser desplegada en AWS usando un flujo de Infraestructura como Código (IaC) con Terraform y Docker. No se recomienda un flujo de ejecución local con `docker-compose` ya que la configuración está optimizada para la inyección de secretos desde AWS Secrets Manager.
+El despliegue de esta aplicación se gestiona a través de dos herramientas principales que trabajan en conjunto: **Terraform** para la infraestructura inicial y **GitHub Actions** para las actualizaciones continuas del código.
 
 **Para una guía de despliegue detallada paso a paso, por favor consulta [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).**
 
-A continuación, un resumen rápido del proceso:
+### 1. Despliegue Inicial de la Infraestructura (con Terraform)
 
-1.  **Requisitos Previos:**
-    *   Tener una cuenta de AWS, AWS CLI, Terraform CLI y un par de claves SSH configurados.
+Este paso se realiza **una única vez** para crear todos los recursos necesarios en AWS.
 
-2.  **Configurar Secretos:**
-    *   Almacenar todas las variables de entorno necesarias (credenciales de DB, secretos de JWT, usuario admin) en **AWS Secrets Manager**.
-
-3.  **Configurar Variables de Terraform:**
-    *   Crear un archivo `infrastructure/terraform/terraform.tfvars` (que no está en Git) para definir tu región de AWS, el ID de la AMI y las rutas a tus claves SSH.
-
-4.  **Ejecutar Terraform:**
-    *   Desde la carpeta `infrastructure/terraform`, ejecuta los siguientes comandos:
+1.  **Requisitos Previos:** Tener una cuenta de AWS, AWS CLI, Terraform CLI y un par de claves SSH configurados.
+2.  **Configurar Secretos:** Almacenar todas las variables de entorno en **AWS Secrets Manager**.
+3.  **Configurar Variables de Terraform:** Crear un archivo local `infrastructure/terraform/terraform.tfvars` para definir la región, AMI y rutas a las claves SSH.
+4.  **Ejecutar Terraform:** Desde la carpeta `infrastructure/terraform`, ejecuta:
     ```bash
-    # Inicializa Terraform y descarga el proveedor de AWS
     terraform init
-
-    # Revisa el plan de ejecución (opcional pero recomendado)
     terraform plan
-
-    # Aplica los cambios y provisiona la infraestructura
     terraform apply
     ```
+Esto provisionará la instancia EC2 y realizará el primer despliegue de la aplicación.
+
+### 2. Actualizaciones Continuas del Código (con GitHub Actions)
+
+Una vez que la infraestructura está creada, cualquier cambio en el código se despliega automáticamente.
+
+1.  **Realiza cambios en el código** (backend o frontend).
+2.  **Haz `git push` a la rama `main`**.
+3.  **GitHub Actions se activará automáticamente**:
+    -   Se conectará de forma segura a la instancia EC2.
+    -   Hará `git pull` para obtener el código más reciente.
+    -   Reconstruirá las imágenes de Docker que hayan cambiado.
+    -   Reiniciará los servicios con `docker compose up --build -d`.
+4.  Puedes monitorear el progreso del despliegue en la pestaña **"Actions"** de este repositorio de GitHub.
+
+**¡Ya no es necesario usar `terraform apply` o SSH manualmente para actualizar la aplicación!**
 
 5.  **Verificación:**
     *   Una vez que `terraform apply` finalice, te proporcionará la IP pública de la instancia EC2.

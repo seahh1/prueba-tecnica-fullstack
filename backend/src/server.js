@@ -10,7 +10,7 @@ connectDB();
 
 const PORT = process.env.PORT || 5001;
 
-const server = app.listen(PORT, () => { // Usamos 'server' para el unhandledRejection
+const server = app.listen(PORT, () => {
   logger.info(`Backend server listening on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
 

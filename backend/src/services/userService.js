@@ -11,7 +11,7 @@ const getAllUsers = async (queryOptions) => {
   if(search){qery.$or = [
     { name: { $regex: search, $options: 'i' } },
     { email: { $regex: search, $options: 'i' } },
-    ]}
+  ]}
 
   const skip = (page - 1) * limit;
 

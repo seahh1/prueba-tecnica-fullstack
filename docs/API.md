@@ -17,17 +17,34 @@ Desde esta interfaz, podrás:
 
 ## Visión General de la Autenticación
 
-La API utiliza **JSON Web Tokens (JWT)** para proteger los endpoints. El flujo de autenticación es el siguiente:
+La API utiliza un sistema de autenticación robusto basado en **JSON Web Tokens (JWT)**, implementando un flujo de **Access Token** y **Refresh Token** para mejorar la seguridad y la experiencia de usuario.
 
-1.  **Registro (`POST /api/users`):** Un nuevo usuario se puede crear a través de este endpoint público. La contraseña se hashea automáticamente antes de ser guardada en la base de datos.
+### Flujo de Autenticación
 
-2.  **Inicio de Sesión (`POST /api/auth/login`):** El usuario envía su `email` y `password`. Si las credenciales son correctas, la API devuelve un token JWT con una duración definida (ej. 1 hora).
+1.  **Registro (`POST /api/users`):** Un nuevo usuario se puede crear a través de este endpoint público. La contraseña se hashea automáticamente (usando `bcrypt`) antes de ser guardada en la base de datos.
 
-3.  **Acceso a Rutas Protegidas:** Para acceder a los endpoints protegidos (ej. `GET /api/users`, `PUT /api/users/:id`), el cliente debe incluir el token JWT en la cabecera `Authorization` de la petición, utilizando el esquema "Bearer":
+2.  **Inicio de Sesión (`POST /api/auth/login`):**
+    -   El usuario envía su `email` y `password`.
+    -   Si las credenciales son correctas, la API genera dos tokens:
+        -   Un **Access Token** de corta duración (ej. 15 minutos), que se devuelve en el cuerpo de la respuesta JSON.
+        -   Un **Refresh Token** de larga duración (ej. 7 días), que se envía al cliente en una **cookie segura y `HttpOnly`**.
 
-    ```http
-    Authorization: Bearer <tu_token_jwt>
-    ```
+3.  **Acceso a Rutas Protegidas:**
+    -   Para acceder a los endpoints protegidos (ej. `GET /api/users`), el cliente debe incluir el **Access Token** en la cabecera `Authorization` de la petición, utilizando el esquema "Bearer":
+        ```http
+        Authorization: Bearer <tu_access_token>
+        ```
+    -   Si el Access Token es válido, la API procesará la petición.
+
+4.  **Refresco de Sesión (`POST /api/auth/refresh`):**
+    -   Cuando el Access Token expira, el cliente recibirá un error `401 Unauthorized`.
+    -   En ese momento, el frontend puede hacer una petición a este endpoint **sin cuerpo**. La petición incluirá automáticamente la cookie `HttpOnly` que contiene el Refresh Token.
+    -   Si el Refresh Token es válido, la API devolverá un **nuevo Access Token**, permitiendo al usuario continuar su sesión sin necesidad de volver a iniciarla.
+
+### Seguridad de los Tokens
+
+-   **Access Token:** Es de corta duración para minimizar el riesgo en caso de ser interceptado. Se almacena en la memoria del cliente (frontend).
+-   **Refresh Token:** Es de larga duración y se almacena en una cookie `HttpOnly`, lo que impide que sea accedido por scripts maliciosos en el navegador (protección contra ataques XSS).
 
 Si el token es válido, la API procesará la petición. Si el token falta, es inválido o ha expirado, la API devolverá un error `401 Unauthorized`.
 
@@ -37,6 +54,7 @@ A continuación, se muestra una visión general de los recursos y endpoints prin
 
 -   **Autenticación (`/api/auth`)**
     -   `POST /login`: Autentica a un usuario y devuelve un token JWT.
+    -   `POST /refresh`: Genera un nuevo Access Token a partir de un Refresh Token válido (enviado vía cookie). (Protegido por cookie)
 
 -   **Usuarios (`/api/users`)**
     -   `POST /`: Crea un nuevo usuario (Registro). (Público)

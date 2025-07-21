@@ -4,7 +4,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'User Management API',
+      title: 'API de gestión de usuarios',
       version: '1.0.0',
       description: 'Una API para la gestión de usuarios, construida con Node.js, Express y MongoDB.',
     },

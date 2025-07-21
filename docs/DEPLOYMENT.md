@@ -1,6 +1,6 @@
-# Guía de Despliegue en AWS con Terraform
+# Guía de Despliegue (Terraform + GitHub Actions)
 
-Este documento proporciona una guía paso a paso para desplegar la aplicación fullstack en una instancia EC2 de AWS utilizando Terraform y Docker.
+Este documento proporciona una guía paso a paso para el ciclo de vida completo del despliegue: la **creación inicial de la infraestructura** con Terraform y las **actualizaciones continuas del código** a través de un pipeline de CI/CD con GitHub Actions.
 
 ## 1. Pre-requisitos
 
@@ -35,8 +35,11 @@ La aplicación gestiona todas las variables sensibles y secretos a través de AW
     -   `ADMIN_NAME`: (ej. `Admin User`)
     -   `ADMIN_EMAIL`: (ej. `admin@example.com`)
     -   `ADMIN_PASSWORD`: (la contraseña para el usuario administrador inicial)
+    -   `JWT_EXPIRE`: (ej. `15m` o `1d`)
+    -   `REFRESH_TOKEN_SECRET`: (una segunda cadena larga y aleatoria, diferente a JWT_SECRET)
 5.  Haz clic en "Next".
-6.  Asigna un **Nombre al secreto (Secret name)**. El código Terraform está configurado para usar `app/user-management/prod`. Si usas un nombre diferente, deberás actualizarlo en el archivo `infrastructure/scripts/setup.sh`.
+6.  Asigna un **Nombre al secreto (Secret name)**. El código Terraform está configurado para usar `app/user-management/prod`. Si usas un nombre diferente, deberás actualizarlo en el archivo `infrastructure/terraform/main.tf` (en   el  
+    archivo `infrastructure/terraform/scripts/setup.sh`) y en el workflow de GitHub Actions (`.github/workflows/deploy.yml`).
 7.  Completa el proceso de creación del secreto.
 
 ## 3. Configuración de Variables Locales de Terraform
@@ -64,7 +67,28 @@ Terraform necesita saber dónde encontrar tu clave SSH y en qué región despleg
     private_key_path = "C:/Users/TuUsuario/.ssh/my_app_key"
     ```
 
-## 4. Proceso de Despliegue con Terraform
+## 4. Configuración para GitHub Actions (CI/CD)
+
+Para habilitar el despliegue automático de actualizaciones de código, debes configurar la confianza entre tu repositorio de GitHub y tu cuenta de AWS, además de añadir los secretos necesarios.
+
+### a. Configurar Confianza OIDC en AWS IAM
+
+1.  **Añadir Proveedor de Identidad:** En la consola de AWS IAM, añade un nuevo proveedor de identidad OpenID Connect (OIDC) con la URL `https://token.actions.githubusercontent.com` y la `Audience` `sts.amazonaws.com`.
+2.  **Crear Rol IAM:** Crea un nuevo rol IAM para "Web identity", seleccionando el proveedor OIDC que acabas de crear. Configura la confianza para tu repositorio específico (`tu_usuario/tu_repo`) y la rama `main`. No se necesitan políticas de AWS para este pipeline.
+3.  **Copiar el ARN del Rol:** Guarda el ARN del rol creado (ej. `arn:aws:iam::123456789012:role/GitHubActions-EC2-DeployRole`).
+
+### b. Añadir Secretos al Repositorio de GitHub
+
+1.  En tu repositorio de GitHub, ve a **Settings > Secrets and variables > Actions**.
+2.  Añade los siguientes **Repository secrets**:
+    -   `AWS_ROLE_TO_ASSUME`: Pega el ARN del rol IAM del paso anterior.
+    -   `EC2_HOST`: La IP pública de la instancia EC2 que Terraform creará. (Deberás añadir esto **después** del primer `terraform apply`).
+    -   `EC2_USER`: `ubuntu`.
+    -   `EC2_SSH_PRIVATE_KEY`: El contenido completo de tu archivo de clave SSH privada (el que no termina en `.pub`).
+
+## 5. Despliegue Inicial de la Infraestructura
+
+Este proceso se realiza **una sola vez** para crear la infraestructura. Las futuras actualizaciones de código se desplegarán automáticamente a través de GitHub Actions.
 
 Ejecuta los siguientes comandos desde la carpeta `infrastructure/terraform/`.
 
@@ -88,7 +112,7 @@ Ejecuta los siguientes comandos desde la carpeta `infrastructure/terraform/`.
     ```
     Escribe `yes` cuando se te solicite. El proceso puede tardar varios minutos mientras la instancia EC2 se inicia y ejecuta el script `user_data` para instalar Docker y desplegar la aplicación.
 
-## 5. Verificación del Despliegue
+## 6. Verificación del Despliegue
 
 Una vez que `terraform apply` finalice, mostrará los `outputs` definidos, incluyendo la IP pública de la instancia.
 
@@ -111,9 +135,27 @@ Una vez que `terraform apply` finalice, mostrará los `outputs` definidos, inclu
         ```
     -   Una vez dentro, puedes usar comandos de Docker como `docker ps` para ver los contenedores en ejecución o `docker logs <nombre_contenedor>` para ver sus logs.
 
-## 6. Destrucción de los Recursos
+## 7. Actualizaciones Continuas del Código (vía GitHub Actions)
 
-**¡IMPORTANTE!** Cuando hayas terminado con la prueba o ya no necesites la infraestructura, destrúyela para evitar incurrir en costos.
+Una vez que la infraestructura inicial está desplegada y los secretos de GitHub Actions están configurados, el proceso de actualización es automático.
+
+1.  Realiza los cambios deseados en el código fuente (backend o frontend).
+2.  Haz `commit` y `push` de tus cambios a la rama `main` de tu repositorio de GitHub.
+    ```bash
+    git add .
+    git commit -m "feat: add new feature"
+    git push origin main
+    ```
+3.  El pipeline de GitHub Actions se activará automáticamente. Puedes monitorear su progreso en la pestaña **"Actions"** de tu repositorio.
+4.  El workflow se encargará de:
+    -   Conectarse a tu instancia EC2.
+    -   Actualizar el código con `git pull`.
+    -   Refrescar los secretos desde AWS Secrets Manager.
+    -   Reconstruir las imágenes de Docker que hayan cambiado y reiniciar los servicios.
+
+## 8. Destrucción de los Recursos
+
+**¡IMPORTANTE!** Para evitar costos inesperados en AWS, asegúrate de destruir todos los recursos una vez que hayas terminado con la prueba.
 
 1.  Desde la carpeta `infrastructure/terraform/`, ejecuta:
     ```bash

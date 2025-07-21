@@ -29,7 +29,7 @@ const seedAdminUser = async () => {
     console.log('Seed script: Usuario administrador creado exitosamente.');
 
   } catch (error) {
-    console.error('Seed script: Error al sembrar el usuario administrador:', error);
+    console.error('Seed script: Error al insertar el usuario administrador:', error);
     process.exit(1); 
   } finally {
     await mongoose.disconnect();
